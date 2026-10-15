@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f3ee">
+  <title>N-Puzzle solver</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='tree.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 11a8 8 0 1 1 2 7M4 5v6h6"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 4-3 6-6s4-6 6-6h3m-4-4 4 4-4 4"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  </svg>
+  <header class="site-header">
+    <a href="/" class="wordmark" aria-label="N-Puzzle home"><svg class="brand-icon" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="11" height="11" rx="2"/><rect x="16" y="1" width="11" height="11" rx="2"/><rect x="1" y="16" width="11" height="11" rx="2"/></svg>N-Puzzle<span>Solver</span></a>
+    <nav aria-label="Main navigation"><a href="#workspace" class="nav-current">Workbench</a><a href="#comparison">Compare algorithms</a></nav>
+  </header>
+  <main>
+    <section id="workspace" class="workspace" aria-label="Puzzle workbench" data-ui>
+      <aside class="setup-panel">
+        <h2>Puzzle settings</h2>
+        <form id="puzzle-form">
+          <label for="size">Board size</label>
+          <select id="size" name="size"><option value="2">2 × 2</option><option value="3" selected>3 × 3</option><option value="4">4 × 4</option><option value="5">5 × 5</option></select>
+          <label for="initial-state">Initial arrangement</label>
+          <textarea id="initial-state" name="state" rows="3" spellcheck="false" aria-describedby="state-help">1 2 5
+3 4 0
+6 7 8</textarea>
+          <p class="field-help" id="state-help">Use 0 for the blank. Separate tiles with spaces or commas.</p>
+          <div class="setup-actions"><button type="button" class="text-button" id="shuffle"><svg><use href="#i-shuffle"/></svg>Shuffle</button><button type="button" class="text-button" id="sample">Lab example</button></div>
+          <label for="algorithm">Search algorithm</label>
+          <select id="algorithm"><option value="astar">A* search</option><option value="bfs">Breadth-first search</option><option value="dfs">Depth-first search</option><option value="ids">Iterative deepening</option></select>
+          <div id="heuristic-field"><label for="heuristic">Heuristic</label><div class="select-wrap"><select id="heuristic"><option value="manhattan">Manhattan distance</option><option value="euclidean">Euclidean distance</option></select></div></div>
+          <div id="depth-field" hidden><label for="depth-limit">Maximum depth</label><input id="depth-limit" type="number" min="0" max="64" value="32"><p class="field-help">Stop searching beyond this depth.</p></div>
+          <button class="primary-button solve-button" id="solve" type="submit">Solve puzzle<svg><use href="#i-arrow"/></svg></button>
+          <p class="search-note">Up to 3 seconds or 100,000 nodes per search.</p>
+        </form>
+        <div class="goal-block"><div><h3>Goal state</h3><p>Ascending order; 0 first.</p></div><div id="goal-board" class="mini-board" aria-label="Goal arrangement"></div></div>
+      </aside>
+      <div class="puzzle-panel">
+        <div class="board-topline"><span id="board-label">Initial state</span><span class="board-mode"><span class="status-dot"></span><span id="board-status">Ready</span></span></div>
+        <div class="board-stage"><div class="board-perspective"><div id="board-frame" class="board-frame"><div class="frame-label">N-PUZZLE</div><div id="board" class="board" role="group" aria-label="Interactive puzzle board"></div></div></div></div>
+        <p id="board-caption" class="board-caption"></p>
+        <div class="playback" aria-label="Solution playback">
+          <div class="playback-info"><span id="step-label">Move 0 of 0</span><label class="speed-label" for="speed">Playback<select id="speed"><option value="1100">0.5×</option><option value="700" selected>1×</option><option value="420">2×</option></select></label></div>
+          <input type="range" id="timeline" min="0" max="0" value="0" aria-label="Solution move" disabled>
+          <div class="transport"><button id="restart" class="icon-button" aria-label="Restart playback" disabled><svg><use href="#i-reset"/></svg></button><button id="back" class="secondary-button" disabled><svg><use href="#i-back"/></svg>Back</button><button id="play" class="play-button" aria-label="Play solution" disabled><svg><use href="#i-play"/></svg></button><button id="next" class="secondary-button" disabled>Next<svg><use href="#i-next"/></svg></button><span class="keyboard-hint">← / → to step</span></div>
+        </div>
+      </div>
+      <aside class="results-panel">
+        <div class="results-heading"><h2>Search results</h2><span id="result-state">Not run yet</span></div>
+        <div id="algorithm-summary" class="algorithm-summary"><strong>A* search</strong><p>Priority: cost so far + estimated remaining cost.</p><span>Min-heap + best-cost map</span></div>
+        <dl class="metrics"><div><dt>Path cost</dt><dd id="metric-cost">—<small>moves</small></dd></div><div><dt>Nodes expanded</dt><dd id="metric-nodes">—</dd></div><div><dt>Search depth</dt><dd id="metric-depth">—</dd></div><div><dt>Running time</dt><dd id="metric-time">—<small>ms</small></dd></div></dl>
+        <div class="path-block"><h3>Path to the goal</h3><div id="path-moves" class="path-moves"><p class="muted">No solution yet.</p></div><p class="field-help">Directions describe the blank’s movement.</p></div>
+        <button id="download" class="text-button export-button" disabled><svg><use href="#i-download"/></svg>Export run as JSON</button>
+      </aside>
+    </section>
+    <p id="message" class="message" role="status" aria-live="polite"></p>
+    <noscript><p class="message error">Enable JavaScript to animate the puzzle and submit searches.</p></noscript>
+    <section class="detail-section" id="comparison">
+      <div class="section-heading"><div><h2>Algorithm comparison</h2><p>Compare all five configurations on this board.</p></div><button class="secondary-button" id="compare">Compare algorithms<svg><use href="#i-arrow"/></svg></button></div>
+      <div class="table-scroll"><table><caption class="sr-only">Measured algorithm comparison for the current initial arrangement</caption><thead><tr><th scope="col">Algorithm</th><th scope="col">Status</th><th scope="col">Path cost</th><th scope="col">Nodes expanded</th><th scope="col">Max depth</th><th scope="col">Time</th><th scope="col">Solution</th></tr></thead><tbody id="comparison-body"><tr><td>Breadth-first</td><td colspan="6" class="muted">No results.</td></tr><tr><td>Depth-first</td><td colspan="6" class="muted">—</td></tr><tr><td>Iterative deepening</td><td colspan="6" class="muted">—</td></tr><tr><td>A* · Manhattan</td><td colspan="6" class="muted">—</td></tr><tr><td>A* · Euclidean</td><td colspan="6" class="muted">—</td></tr></tbody></table></div>
+      <p class="comparison-note">Both heuristics are admissible. Manhattan dominates Euclidean; expansion counts also depend on tie-breaking.</p>
+    </section>
+    <section class="detail-section search-tree-section" aria-labelledby="tree-heading" data-ui>
+      <div class="section-heading"><div><h2 id="tree-heading">Search tree</h2><p id="tree-summary">Solve a puzzle to display the tree.</p></div><div class="tree-toolbar" aria-label="Tree zoom"><button id="tree-zoom-out" class="secondary-button" aria-label="Zoom out tree" disabled>−</button><output id="tree-zoom-level" aria-live="polite">85%</output><button id="tree-zoom-in" class="secondary-button" aria-label="Zoom in tree" disabled>+</button><button id="tree-fit" class="secondary-button" disabled>Fit tree</button></div></div>
+      <div class="tree-legend"><span><i class="legend-path"></i>Solution path</span><span><i class="legend-expanded"></i>Expanded</span><span><i class="legend-frontier"></i>Not expanded</span></div>
+      <div id="tree-viewport" class="tree-viewport" tabindex="0" aria-label="Search tree. Scroll to explore; select a board for details."><div id="tree-empty" class="tree-empty">No search tree yet.</div><div id="tree-canvas" class="tree-canvas"></div></div>
+      <p id="tree-selection" class="tree-selection" aria-live="polite">Select a node for costs and expansion order. Solution nodes replay the move.</p>
+    </section>
+    <section class="detail-section trace-section" aria-labelledby="trace-heading"><div class="section-heading"><div><h2 id="trace-heading">Expansion order</h2><p id="trace-description">Processed boards in search order, not solution order.</p></div><button id="trace-toggle" class="secondary-button" aria-expanded="false" aria-controls="trace-content" disabled>Show expansion trace</button></div><div id="trace-content" hidden><div class="trace-controls"><button id="trace-prev" class="secondary-button">Previous board</button><span id="trace-count">0 of 0</span><button id="trace-next" class="secondary-button">Next board</button></div><div id="expansion-board" class="mini-board expansion-board"></div><p id="trace-meta"></p></div></section>
+  </main>
+  <footer><a href="/" class="footer-brand">N-Puzzle Lab</a><a href="#workspace">Back to the workbench</a></footer>
+</body>
+</html>
