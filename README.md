@@ -67,7 +67,7 @@ The included Flask server is intended for local development.
 ## Using the workbench
 
 1. Choose a board size and enter each number from `0` to `N² − 1` exactly once, separated by spaces or commas. Alternatively, select **Shuffle** or **Lab example**.
-2. Select an algorithm. Choose a heuristic for A*, or set the maximum depth for DFS and iterative deepening.
+2. Select an algorithm. Choose a heuristic for A*.
 3. Select **Solve puzzle**. Use the playback controls to follow the returned solution. Directions describe the blank's movement.
 4. Use **Compare algorithms** to run all five configurations on the same starting board. **View path** opens a comparison result on the main board.
 5. Inspect the **Search tree**, open **Expansion order**, or export the solved run as JSON.
@@ -79,8 +79,8 @@ Solution playback follows legal moves along the returned path. Expansion order f
 | Algorithm | Search strategy | Options |
 | --- | --- | --- |
 | BFS | FIFO queue; searches level by level | — |
-| DFS | LIFO stack; follows a branch before backtracking | Maximum depth |
-| Iterative deepening | Repeats depth-limited DFS with increasing limits | Maximum depth |
+| DFS | LIFO stack; follows a branch before backtracking | — |
+| Iterative deepening | Repeats depth-limited DFS with increasing limits | — |
 | A* | Min-heap ordered by `f = g + h` | Manhattan or Euclidean distance |
 
 Each slide costs one. Both heuristics exclude the blank. DFS returns the first solution it encounters, which can be longer than the shortest path.
@@ -94,8 +94,7 @@ The results report:
 
 ### Limits and implementation notes
 
-- Web searches stop after **3 seconds** or **100,000 processed nodes**. These settings live in `npuzzle/search/limits.py`. A stopped search is reported separately from an unsolvable arrangement or an exhausted depth limit.
-- The web depth limit defaults to **32** and accepts **0–64**. Depth counts moves, not board positions.
+- Web searches stop after **3 seconds** or **250,000 processed nodes**. These settings live in `npuzzle/search/limits.py`. A stopped search is reported separately from an unsolvable arrangement.
 - Completed searches return their full recorded expansion trace; there is no 1,500-board display or export cap. Expansion traces are currently returned only for solved runs.
 - The search tree is a separate preview capped at **300 entries**. It includes generated entries and their discovery parents, omits rejected duplicate routes, and identifies truncation. A solution outside the preview may not be highlighted.
 - For iterative deepening, the tree shows the final attempted pass; expansion traces and metrics include all passes.
@@ -133,7 +132,7 @@ result = dfs(start, depth_limit=20)
 result = ids(start, max_depth=20)
 ```
 
-Direct DFS calls default to `N²`; iterative deepening defaults to `N² − 1`. Direct calls have no time/node budget unless a `SearchBudget` is supplied. The compatibility import `from algorithms import solveNPuzzle` is also supported.
+Direct iterative deepening (`ids`) iterates over depths 0, 1, 2, ... until a solution is found (or up to `max_depth` if specified). Direct DFS explores branches deeply without a per-pass cutoff unless `depth_limit` is specified. Direct calls have no time/node budget unless a `SearchBudget` is supplied. The compatibility import `from algorithms import solveNPuzzle` is also supported.
 
 ## Project structure
 

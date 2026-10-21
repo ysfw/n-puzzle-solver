@@ -10,7 +10,7 @@ class SearchLimit(Exception):
 
 
 class SearchBudget:
-    def __init__(self, seconds=3.0, max_nodes=100000):
+    def __init__(self, seconds=3.0, max_nodes=250000):
         self.started = time.perf_counter()
         self.seconds = seconds
         self.max_nodes = max_nodes

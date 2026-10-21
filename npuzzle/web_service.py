@@ -16,9 +16,9 @@ def run_search(data):
         raise ValueError("Choose BFS, DFS, iterative deepening, or A*.")
     if heuristic_name not in ("manhattan", "euclidean"):
         raise ValueError("Choose Manhattan or Euclidean distance.")
-    depth_limit = data.get("depth_limit", 32)
-    if type(depth_limit) is not int or not 0 <= depth_limit <= 64:
-        raise ValueError("Depth limit must be a whole number between 0 and 64.")
+    depth_limit = data.get("depth_limit")
+    if depth_limit is not None and (type(depth_limit) is not int or depth_limit < 0):
+        raise ValueError("Depth limit must be a whole number.")
     base = dict(algorithm=algorithm, heuristic=heuristic_name, size=puzzle.N,
                 initial=list(state), goal=list(puzzle.goal), depth_limit=depth_limit)
     if not is_solvable(state):
@@ -61,7 +61,8 @@ def run_search(data):
         return dict(base, status="limited", message=f"{exc.reason}. Try A*, a shallower shuffle, or a smaller board.",
                     nodes_expanded=exc.expanded, search_depth=exc.depth, running_time=exc.elapsed, tree=tree_data())
     if out is None:
-        return dict(base, status="not_found", message="No solution within the depth limit. Increase it or try A*.",
+        message = "No solution found." if depth_limit is None else "No solution within the depth limit. Increase it or try A*."
+        return dict(base, status="not_found", message=message,
                     nodes_expanded=budget.expanded, search_depth=budget.depth,
                     running_time=time.perf_counter() - budget.started, tree=tree_data())
     path = out.getPath()

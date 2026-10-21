@@ -7,8 +7,6 @@ from math import isqrt
 
 def dfs(init_state: tuple, depth_limit=None, *, puzzle=None, budget=None, _trace=None) -> Output:
     puzzle = puzzle or puzzle_for(isqrt(len(init_state)))
-    if depth_limit is None:
-        depth_limit = puzzle.board_size
     start_time = time.perf_counter()
     start_h = puzzle.zobrist(init_state)
     # ("do"/"undo", cost, h, depth, blank_bos, tile_pos, parent_h, move_name)
@@ -52,7 +50,7 @@ def dfs(init_state: tuple, depth_limit=None, *, puzzle=None, budget=None, _trace
                 elapsed_time = time.perf_counter() - start_time
                 return Output(cost, depths, expanded_nodes, parent, elapsed_time, init_state, puzzle.goal_h)
             
-            if depth >= depth_limit:
+            if depth_limit is not None and depth >= depth_limit:
                 continue
             
             x, y = divmod(blank_pos, puzzle.N)

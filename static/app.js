@@ -12,7 +12,7 @@ const configurations = [
   ['ids', 'manhattan', 'Iterative deepening'], ['astar', 'manhattan', 'A* · Manhattan'],
   ['astar', 'euclidean', 'A* · Euclidean']
 ];
-const statusNames = {solved: 'Solved', limited: 'Search limit', not_found: 'Depth limit', unsolvable: 'Unsolvable'};
+const statusNames = {solved: 'Solved', limited: 'Search limit', not_found: 'No solution', unsolvable: 'Unsolvable'};
 let size = 3, initial = [...sample], boardState = [...sample], result = null, step = 0;
 let busy = false, timer = null, traceIndex = 0, revision = 0;
 let comparisonRuns = [];
@@ -120,7 +120,6 @@ function updateDescription() {
   const span = document.createElement('span'); span.textContent = structure;
   $('algorithm-summary').replaceChildren(strong, p, span);
   $('heuristic-field').hidden = $('algorithm').value !== 'astar';
-  $('depth-field').hidden = !['dfs', 'ids'].includes($('algorithm').value);
 }
 function updateControls() {
   const hasPath = !!result && result.status === 'solved';
@@ -183,12 +182,12 @@ function showResult(data) {
 }
 function setBusy(value) {
   busy = value; document.body.classList.toggle('busy', value);
-  for (const id of ['solve', 'compare', 'shuffle', 'sample', 'size', 'initial-state', 'algorithm', 'heuristic', 'depth-limit']) $(id).disabled = value;
+  for (const id of ['solve', 'compare', 'shuffle', 'sample', 'size', 'initial-state', 'algorithm', 'heuristic']) $(id).disabled = value;
   $('solve').replaceChildren(document.createTextNode(value ? 'Searching…' : 'Solve puzzle'), icon('arrow'));
   updateControls(); renderBoard(boardState);
 }
 function payload(state, algorithm = $('algorithm').value, heuristic = $('heuristic').value) {
-  return {state, algorithm, heuristic, depth_limit: Number($('depth-limit').value)};
+  return {state, algorithm, heuristic};
 }
 async function requestSearch(data) {
   const response = await fetch('/api/solve', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
@@ -221,7 +220,7 @@ $('initial-state').addEventListener('input', () => {
   invalidate(); try {initial = readState(); createBoard(initial); message('Board updated.');}
   catch (error) {message(error.message, true);}
 });
-for (const id of ['algorithm', 'heuristic', 'depth-limit']) $(id).addEventListener('change', () => {
+for (const id of ['algorithm', 'heuristic']) $(id).addEventListener('change', () => {
   invalidate(); updateDescription(); renderBoard(initial); message('Settings updated.');
 });
 $('next').addEventListener('click', () => seek(step + 1)); $('back').addEventListener('click', () => seek(step - 1));
@@ -253,7 +252,7 @@ $('trace-prev').addEventListener('click', () => {traceIndex = Math.max(0, traceI
 $('trace-next').addEventListener('click', () => {traceIndex = Math.min(result.expansions.length - 1, traceIndex + 1); renderTrace();});
 $('download').addEventListener('click', () => {
   if (!result) return;
-  const blob = new Blob([JSON.stringify({...result, comparisons: comparisonRuns, notes: {goal: 'Ascending, blank at top left', limits: '3 seconds or 100,000 nodes per run', expanded: 'Processed non-stale entries, including the goal; IDS counts every pass', hash: 'Zobrist identifiers; hash collisions assumed absent'}}, null, 2)], {type: 'application/json'});
+  const blob = new Blob([JSON.stringify({...result, comparisons: comparisonRuns, notes: {goal: 'Ascending, blank at top left', limits: '3 seconds or 250,000 nodes per run', expanded: 'Processed non-stale entries, including the goal; IDS counts every pass', hash: 'Zobrist identifiers; hash collisions assumed absent'}}, null, 2)], {type: 'application/json'});
   const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = `npuzzle-${size}x${size}-${result.algorithm}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 $('compare').addEventListener('click', async () => {
@@ -274,7 +273,7 @@ $('compare').addEventListener('click', async () => {
           if (busy) return; $('trace-content').hidden = true; $('trace-toggle').setAttribute('aria-expanded', 'false');
           showResult(data); $('workspace').scrollIntoView({behavior: reducedMotion.matches ? 'instant' : 'smooth'});
         }); td.append(button);
-      } else td.textContent = data.status === 'unsolvable' ? 'Parity mismatch' : data.status === 'limited' ? 'Budget reached' : 'Depth reached';
+      } else td.textContent = data.status === 'unsolvable' ? 'Parity mismatch' : data.status === 'limited' ? 'Budget reached' : 'No solution';
       tr.append(td);
     }
     message('Comparison complete.');
