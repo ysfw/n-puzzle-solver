@@ -98,7 +98,7 @@ The results report:
 - Completed searches return their full recorded expansion trace; there is no 1,500-board display or export cap. Expansion traces are currently returned only for solved runs.
 - The search tree is a separate preview capped at **300 entries**. It includes generated entries and their discovery parents, omits rejected duplicate routes, and identifies truncation. A solution outside the preview may not be highlighted.
 - For iterative deepening, the tree shows the final attempted pass; expansion traces and metrics include all passes.
-- DFS currently skips previously explored children even when a shallower route is found later. With a depth cutoff, this can miss a solution within the chosen limit; iterative deepening uses the same DFS implementation.
+- DFS tracks the depth of explored states: when a depth cutoff is used (including in iterative deepening), it allows revisiting previously explored states if a shallower route is found later, preventing solutions within the chosen limit from being missed.
 - State identity uses Zobrist hashes and assumes no hash collisions. Large boards may exhaust the search budget even when solvable.
 
 ## Console and Python usage

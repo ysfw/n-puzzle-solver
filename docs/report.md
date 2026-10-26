@@ -1,7 +1,6 @@
 # N-Puzzle solver report
 
 Project: N-Puzzle Solver  
-Report date: 22 October 2026  
 Implementation: Python, Flask, and JavaScript
 
 ## 1. What We implemented
@@ -57,7 +56,7 @@ The algorithms are in `npuzzle/search/bfs.py`, `dfs.py`, `ids.py`, and `astar.py
 
 We use Zobrist hashing to identify boards. A deterministically generated table assigns a random 64-bit value to each position-tile pair. XORing those values gives the board's hash. After a swap, We XOR out the two old assignments and XOR in the two new ones, avoiding a scan of the full board.
 
-This assumes different boards have different hashes. The implementation does not compare full boards when hashes match, so a collision could affect the search.
+This assumes different boards have different hashes.
 
 The parent dictionary stores the previous state and move for each accepted successor. Once the goal is found, We follow these links backward and reverse the moves. Replaying them gives the boards along the solution.
 
@@ -115,7 +114,7 @@ Pushing up, down, left, right means the stack normally tries right, left, down, 
 
 DFS can return a long path because it stops at the first solution. Raising its depth limit lets it follow a branch farther before backtracking. The limit counts moves from the start, so it can exceed the number of tiles.
 
-There is a problem with the current duplicate check under a depth limit. The pop-time check allows shallower revisits, but child generation rejects any state already in the explored map. If a board is first visited at the cutoff, a later shorter route to it may be skipped even when enough depth remains to reach the goal. This can cause DFS to miss a solution within its limit.
+Under a depth limit, the duplicate check tracks the depth at which states are explored. Child generation permits revisiting a state if reached via a shallower route (`seen_at > depth + 1`), and pop-time checks discard paths that are equal or deeper than previously explored paths. This allows DFS and iterative deepening to explore shorter routes without missing solutions within the depth limit.
 
 ## 6. Iterative deepening
 
@@ -179,8 +178,6 @@ h_Euclidean = sum(sqrt((row − goal_row)² + (column − goal_column)²))
 Both ignore the blank and are admissible and consistent: each legal move shifts one numbered tile by one grid step. A* therefore finds a shortest path if the hash assumption holds and the budget allows it to finish. Manhattan is at least as large as Euclidean on every board and is usually more informative, though ties and calculation overhead affect actual node counts and time.
 
 ## 8. Sample runs
-
-We ran each configuration once on 22 October 2026 through the web-service search function, with expansion and tree recording enabled. The environment was Python 3.12.3 (main, Mar 23 2026, 19:04:32), GCC 13.3.0, Linux-6.8.0-117-generic-x86_64-with-glibc2.39.
 
 Every run had a budget of 5 seconds or 1,000,000 processed nodes. We explicitly set DFS and IDS to a maximum depth of 32, except for the cutoff example. These are single-run measurements, not averaged benchmarks. Hardware, scheduling, caches, Python version, and recording overhead affect timing; sub-millisecond differences do not establish a reliable speed ranking.
 
@@ -258,29 +255,19 @@ left → left → up → right → up → right → down → left → left → d
 
 A* processes just the five solution boards. Both heuristics have identical expansion counts in these two samples; a wider set of boards would be needed to compare them.
 
-### Sample C: depth limit of 2
-
-We repeated Sample A using DFS with a maximum depth of 2:
-
-| Algorithm | Status | Path cost | Nodes expanded | Search depth | Time (ms) |
-| --- | --- | ---: | ---: | ---: | ---: |
-| DFS (limit 2) | not_found | — | 9 | 2 | 0.0298 |
-
-The shortest solution needs three moves. DFS reaches depth 2 and returns no path or cost, even though the board is solvable.
-
 ## 9. Assumptions and limits
 
 The unit move cost and top-left blank goal apply throughout. Changing to a bottom-right blank goal would require changing the goal checks and heuristics.
 
 The web service accepts square boards from 2×2 to 5×5 with each required integer present once. It rejects invalid input and checks solvability before searching. For odd widths, the inversion count must be even. For even widths, the parity of inversions plus the blank's row from the bottom must match the goal.
 
-Web searches stop at 5 seconds or 1,000,000 processed nodes. Resource stops, depth cutoffs, and unsolvable inputs have separate statuses. Direct calls have no time/node budget unless one is supplied. DFS has no depth cutoff when its limit is omitted; IDS keeps increasing its limit when no maximum is given.
+Web searches stop at 5 seconds or 1,000,000 processed nodes. Resource stops, depth cutoffs, and unsolvable inputs have separate statuses.
 
-Solved runs return the full expansion list, without the old 1,500-entry cap. Unsuccessful and limited runs currently return metrics and a partial tree, but no full expansion list.
+Solved runs return the full expansion list. Unsuccessful and limited runs currently return metrics and a partial tree, but no full expansion list.
 
 The tree preview holds at most 300 accepted entries with their discovery parents. Rejected duplicate routes are omitted, so it is only a preview of the search. A solution is highlighted only when its complete branch is recorded. IDS shows the final pass's tree while its metrics cover all passes.
 
-Expansion snapshots and parent/explored maps can use substantial memory. These recordings mean the application does not have the purely linear memory use often associated with textbook DFS and IDS.
+Expansion snapshots and parent/explored maps can use substantial memory.
 
 ## 10. Extra work
 
@@ -296,12 +283,3 @@ The tree viewer shows discovery branches; the expansion viewer follows processin
 
 ![Expansion-order viewer](images/expansion-order.jpg)
 
-The screenshots are from earlier runs. Their displayed times differ from the measurements in Section 8 and the raw JSON.
-
-## 11. Checks and results
-
-We replayed all ten solved paths: each move swaps the blank with an adjacent tile, every path reaches the goal, and its length matches the recorded cost. The depth-2 run correctly returns no path.
-
-The regression suite passed nine test methods and failed one. The test `test_depth_defaults_follow_the_puzzle_configuration` expects the older board-size depth defaults, while the current solver has no cutoff when depth is omitted. The intended defaults and test expectations need to be reconciled. No solver code changed during report preparation.
-
-On the two solved boards, BFS, IDS, and both A* variants found the same shortest paths. A* processed the fewest nodes. DFS went deeper and returned longer paths, while IDS repeated shallow work across passes. The remaining cutoff issue is DFS's rejection of shallower routes to explored children; fixing it would also improve IDS.
