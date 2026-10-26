@@ -7,8 +7,6 @@ Implementation: Python, Flask, and JavaScript
 
 We implemented BFS, DFS, iterative deepening (IDS), and A* for the N-puzzle. The solver returns a path to the goal and records its cost, nodes expanded, maximum search depth, and running time. We also added a web interface to play back solutions and inspect the search.
 
-The sample measurements and full move sequences are saved in [report-results.json](report-results.json).
-
 ## 2. Representing the puzzle
 
 An N×N board contains each number from 0 to N² − 1 once. Zero is the blank. A legal move swaps it with a tile directly above, below, left, or right. Every move costs one; diagonal moves are not allowed.
