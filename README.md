@@ -94,7 +94,7 @@ The results report:
 
 ### Limits and implementation notes
 
-- Web searches stop after **3 seconds** or **250,000 processed nodes**. These settings live in `npuzzle/search/limits.py`. A stopped search is reported separately from an unsolvable arrangement.
+- Web searches stop after **5 seconds** or **1,000,000 processed nodes**. These settings live in `npuzzle/search/limits.py`. A stopped search is reported separately from an unsolvable arrangement.
 - Completed searches return their full recorded expansion trace; there is no 1,500-board display or export cap. Expansion traces are currently returned only for solved runs.
 - The search tree is a separate preview capped at **300 entries**. It includes generated entries and their discovery parents, omits rejected duplicate routes, and identifies truncation. A solution outside the preview may not be highlighted.
 - For iterative deepening, the tree shows the final attempted pass; expansion traces and metrics include all passes.

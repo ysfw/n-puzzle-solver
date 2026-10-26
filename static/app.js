@@ -252,7 +252,7 @@ $('trace-prev').addEventListener('click', () => {traceIndex = Math.max(0, traceI
 $('trace-next').addEventListener('click', () => {traceIndex = Math.min(result.expansions.length - 1, traceIndex + 1); renderTrace();});
 $('download').addEventListener('click', () => {
   if (!result) return;
-  const blob = new Blob([JSON.stringify({...result, comparisons: comparisonRuns, notes: {goal: 'Ascending, blank at top left', limits: '3 seconds or 250,000 nodes per run', expanded: 'Processed non-stale entries, including the goal; IDS counts every pass', hash: 'Zobrist identifiers; hash collisions assumed absent'}}, null, 2)], {type: 'application/json'});
+  const blob = new Blob([JSON.stringify({...result, comparisons: comparisonRuns, notes: {goal: 'Ascending, blank at top left', limits: '5 seconds or 1,000,000 nodes per run', expanded: 'Processed non-stale entries, including the goal; IDS counts every pass', hash: 'Zobrist identifiers; hash collisions assumed absent'}}, null, 2)], {type: 'application/json'});
   const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = `npuzzle-${size}x${size}-${result.algorithm}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 $('compare').addEventListener('click', async () => {

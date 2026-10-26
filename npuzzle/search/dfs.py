@@ -58,7 +58,8 @@ def dfs(init_state: tuple, depth_limit=None, *, puzzle=None, budget=None, _trace
 
             for tile_pos, name in candidates:
                 new_h = puzzle.zobrist_move(cur_h, blank_pos, tile_pos, state[tile_pos])
-                if new_h not in explored:
+                seen_at = explored.get(new_h)
+                if seen_at is None or (depth_limit is not None and seen_at > depth + 1):
                     child_id = None
                     if budget is not None:
                         child = list(state)

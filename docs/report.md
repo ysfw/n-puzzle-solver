@@ -182,7 +182,7 @@ Both ignore the blank and are admissible and consistent: each legal move shifts 
 
 We ran each configuration once on 22 October 2026 through the web-service search function, with expansion and tree recording enabled. The environment was Python 3.12.3 (main, Mar 23 2026, 19:04:32), GCC 13.3.0, Linux-6.8.0-117-generic-x86_64-with-glibc2.39.
 
-Every run had a budget of 3 seconds or 250,000 processed nodes. We explicitly set DFS and IDS to a maximum depth of 32, except for the cutoff example. These are single-run measurements, not averaged benchmarks. Hardware, scheduling, caches, Python version, and recording overhead affect timing; sub-millisecond differences do not establish a reliable speed ranking.
+Every run had a budget of 5 seconds or 1,000,000 processed nodes. We explicitly set DFS and IDS to a maximum depth of 32, except for the cutoff example. These are single-run measurements, not averaged benchmarks. Hardware, scheduling, caches, Python version, and recording overhead affect timing; sub-millisecond differences do not establish a reliable speed ranking.
 
 ### Sample A: lab example
 
@@ -274,7 +274,7 @@ The unit move cost and top-left blank goal apply throughout. Changing to a botto
 
 The web service accepts square boards from 2×2 to 5×5 with each required integer present once. It rejects invalid input and checks solvability before searching. For odd widths, the inversion count must be even. For even widths, the parity of inversions plus the blank's row from the bottom must match the goal.
 
-Web searches stop at 3 seconds or 250,000 processed nodes. Resource stops, depth cutoffs, and unsolvable inputs have separate statuses. Direct calls have no time/node budget unless one is supplied. DFS has no depth cutoff when its limit is omitted; IDS keeps increasing its limit when no maximum is given.
+Web searches stop at 5 seconds or 1,000,000 processed nodes. Resource stops, depth cutoffs, and unsolvable inputs have separate statuses. Direct calls have no time/node budget unless one is supplied. DFS has no depth cutoff when its limit is omitted; IDS keeps increasing its limit when no maximum is given.
 
 Solved runs return the full expansion list, without the old 1,500-entry cap. Unsuccessful and limited runs currently return metrics and a partial tree, but no full expansion list.
 
